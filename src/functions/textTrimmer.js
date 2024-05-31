@@ -3,4 +3,4 @@ export const trimText = (text, length) => {
         return text;
     }
     return `${text.substring(0, length)}...`;
-}
+};

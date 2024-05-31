@@ -1,23 +1,22 @@
 import axios from "axios";
 
-const BASE_URL = 'http://localhost:8000/api';
+const BASE_URL = "http://localhost:8000/api";
 
 const url = (urlPostfix) => `${BASE_URL}${urlPostfix}`;
 
-const ok = data => ({
-    status: 'ok',
-    payload: data
+const ok = (data) => ({
+    status: "ok",
+    payload: data,
 });
 
-const error = err => ({
-    status: 'error',
-    payload: err
-})
+const error = (err) => ({
+    status: "error",
+    payload: err,
+});
 
 export const _apiFetchArticles = async () => {
     try {
-        const response = await axios.get(url('/article'));
-        console.log(response.data);
+        const response = await axios.get(url("/article"));
 
         return ok(response.data);
     } catch (err) {
@@ -25,4 +24,4 @@ export const _apiFetchArticles = async () => {
 
         return error(err);
     }
-}
+};
