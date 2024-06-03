@@ -1,11 +1,22 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useBackend } from "../../hooks/backend";
 import { RoleItem } from "./RoleItem";
 import { LoadingItem } from "../../components/LoadingItem";
+import { useEffect } from "react";
+import { selectChangeRoleStatus } from "./usersSlice";
+import { resetStatus } from "../users/usersSlice";
 
 export const UserItem = ({ user }) => {
+    const dispatch = useDispatch();
     const { assignRole, removeRole } = useBackend();
-    const changeRoleState = useSelector((state) => state.users.changeRoleState);
+    const changeRoleStatus = useSelector(selectChangeRoleStatus);
+
+    useEffect(() => {
+        if (changeRoleStatus.status === "error") {
+            alert(changeRoleStatus.error);
+            dispatch(resetStatus("changeRoleStatus"))
+        }
+    }, [changeRoleStatus, dispatch]);
 
     const unassignedRoles = ["ROLE_ADMIN", "ROLE_EDITOR", "ROLE_WRITER"].filter(
         (role) => !user.roles.includes(role),
@@ -20,7 +31,7 @@ export const UserItem = ({ user }) => {
     };
 
     return (
-        <LoadingItem className="w-50 mb-4 border" isLoading={changeRoleState.state === 'loading' && changeRoleState.userId === user.id}>
+        <LoadingItem className="w-50 mb-4 border" isLoading={changeRoleStatus.status === 'loading' && changeRoleStatus.userId === user.id}>
             <div className="p-4">
                 <div className="d-flex justify-content-between mb-5">
                     <span>
@@ -39,7 +50,7 @@ export const UserItem = ({ user }) => {
                             key={role}
                             role={role}
                             onRoleClicked={onRemoveRole}
-                            disabled={changeRoleState.state === 'loading'}
+                            disabled={changeRoleStatus.status === 'loading'}
                         />
                     ))}
                 </div>
@@ -54,7 +65,7 @@ export const UserItem = ({ user }) => {
                                 role={role}
                                 isAdd={true}
                                 onRoleClicked={onAssignRole}
-                                disabled={changeRoleState.state === 'loading'}
+                                disabled={changeRoleStatus.status === 'loading'}
                             />
                         ))}
                     </div>

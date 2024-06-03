@@ -1,50 +1,78 @@
 import { useEffect, useState } from "react";
 import { useBackend } from "../../hooks/backend";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { ListingComponent } from "../../components/ListingComponent";
 import { UserItem } from "./UserItem";
 import { ButtonForm } from "../../components/ButtonForm";
 import { UserForm } from "./UserForm";
+import {
+    selectCreateUserStatus,
+    selectFetchUsersStatus,
+    selectUsers,
+} from "./usersSlice";
+import { resetStatus } from "../users/usersSlice";
+import { LoadingItem } from "../../components/LoadingItem";
 
 export const UserList = () => {
+    const dispatch = useDispatch();
     const { doFetchUsers, doCreateUser } = useBackend();
-    const users = useSelector((state) => state.users.users);
-    const fetchUsersState = useSelector((state) => state.users.fetchUsersState);
-    const error = useSelector((state) => state.users.error);
+    const users = useSelector(selectUsers);
+    const fetchUsersStatus = useSelector(selectFetchUsersStatus);
+    const createUserStatus = useSelector(selectCreateUserStatus);
 
     const [showForm, setShowForm] = useState(false);
 
     useEffect(() => {
-        if (fetchUsersState === "idle") {
+        if (!users.hasFetched) {
             doFetchUsers();
         }
-    }, [fetchUsersState, doFetchUsers]);
+    }, [users, doFetchUsers]);
 
     useEffect(() => {
-        if (fetchUsersState === "idle") {
-            doFetchUsers();
+        if (fetchUsersStatus.status === "error") {
+            alert(fetchUsersStatus.error);
+            dispatch(resetStatus("createUserStatus"));
         }
-    }, [fetchUsersState, doFetchUsers]);
+    }, [fetchUsersStatus, dispatch]);
 
-    const onSubmit = async ({username, email}) => {
-        const response = await doCreateUser({username, email});
-        if (response.type.endsWith('rejected')) {
-            alert("Creation unsuccessful");
+    useEffect(() => {
+        if (createUserStatus.status === "error") {
+            alert(createUserStatus.error);
+            dispatch(resetStatus("createUserStatus"));
         }
+    }, [createUserStatus, dispatch]);
+
+    const onSubmit = async ({ username, email }) => {
+        await doCreateUser({ username, email });
         setShowForm(false);
-    }
+    };
 
     return (
         <>
-        <ButtonForm showForm={showForm} triggerShowForm={() => setShowForm(prev => !prev)} showFormText="Create User" className="mb-3" >
-            <UserForm onCancel={() => setShowForm(prev => !prev)} onSubmit={onSubmit} className="mb-3 w-50" />
-        </ButtonForm>
-        <ListingComponent status={fetchUsersState} error={error}>
-            {users.map((user) => (
-                <UserItem key={user.id} user={user} />
-            ))}
-        </ListingComponent>
+            <ButtonForm
+                showForm={showForm}
+                triggerShowForm={() => setShowForm((prev) => !prev)}
+                showFormText="Create User"
+                className="mb-3"
+            >
+                <LoadingItem
+                    isLoading={createUserStatus.status === "loading"}
+                    className="mb-3 w-50"
+                >
+                    <UserForm
+                        onCancel={() => setShowForm((prev) => !prev)}
+                        onSubmit={onSubmit}
+                    />
+                </LoadingItem>
+            </ButtonForm>
+            <ListingComponent
+                status={fetchUsersStatus.status}
+                error={fetchUsersStatus.error}
+            >
+                {users.items.map((user) => (
+                    <UserItem key={user.id} user={user} />
+                ))}
+            </ListingComponent>
         </>
-        
     );
 };

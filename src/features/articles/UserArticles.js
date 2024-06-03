@@ -1,22 +1,37 @@
 import { useEffect } from "react";
 import { useBackend } from "../../hooks/backend";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
-    selectArticles,
-    selectFetchStatus,
-    selectError,
+    resetStatus,
+    selectFetchUserArticlesStatus,
+    selectUserArticles,
 } from "./articlesSlice";
 import { ArticleList } from "./ArticleList";
 
 export const UserArticles = () => {
+    const dispatch = useDispatch();
     const { doFetchUserArticles } = useBackend();
-    const articles = useSelector(selectArticles);
-    const fetchStatus = useSelector(selectFetchStatus);
-    const error = useSelector(selectError);
+    const articles = useSelector(selectUserArticles);
+    const fetchStatus = useSelector(selectFetchUserArticlesStatus);
 
     useEffect(() => {
-        doFetchUserArticles();
-    }, [doFetchUserArticles]);
+        if (!articles.hasFetched) {
+            doFetchUserArticles();
+        }
+    }, [articles, doFetchUserArticles]);
 
-    return <ArticleList articles={articles} fetchStatus={fetchStatus} error={error} />
+    useEffect(() => {
+        if (fetchStatus.status === 'error') {
+            alert(fetchStatus.error);
+            dispatch(resetStatus('fetchUserArticlesStatus'))
+        }
+    }, [fetchStatus, dispatch])
+
+    return (
+        <ArticleList
+            articles={articles.items}
+            fetchStatus={fetchStatus.status}
+            error={fetchStatus.error}
+        />
+    );
 };

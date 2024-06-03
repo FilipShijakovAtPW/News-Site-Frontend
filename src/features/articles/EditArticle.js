@@ -1,27 +1,37 @@
-import { useSelector } from "react-redux";
-import { selectArticles } from "./articlesSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+    resetStatus,
+    selectArticles,
+    selectEditArticleStatus,
+    selectSingleArticle,
+} from "./articlesSlice";
 import { useBackend } from "../../hooks/backend";
 import { ArticleForm } from "./ArticleForm";
 import { LoadingItem } from "../../components/LoadingItem";
 import { useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
 
 export const EditArticle = () => {
+    const dispatch = useDispatch();
     const { articleId } = useParams();
     const navigate = useNavigate();
     const { doEditArticle } = useBackend();
-    const editArticleState = useSelector(state => state.articles.editArticleState);
+    const editArticleStatus = useSelector(selectEditArticleStatus);
 
-    const article = useSelector(selectArticles).find(
-        (a) => a.id === Number(articleId),
-    );
+    useEffect(() => {
+        if (editArticleStatus.status === "error") {
+            alert(editArticleStatus.error);
+            dispatch(resetStatus("editArticleStatus"));
+        }
+    }, [editArticleStatus, dispatch]);
+
+    const article = useSelector((state) => selectSingleArticle(state, articleId));
 
     const onCancel = () => {
-        console.log('here')
         navigate(-1);
     };
 
     const onSave = async ({ title, summary, content }) => {
-        console.log('jfdhjhdasfjifhasdui')
         const response = await doEditArticle({
             articleId,
             title,
@@ -30,22 +40,23 @@ export const EditArticle = () => {
         });
         if (response.type.endsWith("fulfilled")) {
             alert("Article Eddited");
-        } else {
-            alert("Error while edditing article");
         }
         navigate(-1);
     };
 
     if (article) {
         return (
-            <LoadingItem className="w-50" isLoading={editArticleState === 'loading'}>
+            <LoadingItem
+                className="w-50"
+                isLoading={editArticleStatus.status === "loading"}
+            >
                 <ArticleForm
-                onSubmit={onSave}
-                onCancel={onCancel}
-                preTitle={article.title}
-                preSummary={article.summary}
-                preContent={article.content}
-            />
+                    onSubmit={onSave}
+                    onCancel={onCancel}
+                    preTitle={article.title}
+                    preSummary={article.summary}
+                    preContent={article.content}
+                />
             </LoadingItem>
         );
     } else {

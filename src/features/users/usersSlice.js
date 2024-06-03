@@ -3,16 +3,32 @@ import axios from "axios";
 import { url } from "../../functions/urlGenerator";
 
 const initialState = {
-    loggedInAs: null,
-    users: [],
-    loggingInState: "idle",
-    fetchUsersState: "idle",
-    createUserState: "idle",
-    changeRoleState: {
-        state: "idle",
-        userId: 0,
+    loggedInAs: {
+        username: "",
+        roles: [],
+        token: "",
     },
-    error: "",
+    users: {
+        items: [],
+        hasFetched: false,
+    },
+    loginStatus: {
+        status: "idle",
+        error: "",
+    },
+    fetchUsersStatus: {
+        status: "idle",
+        error: "",
+    },
+    createUserStatus: {
+        status: "idle",
+        error: "",
+    },
+    changeRoleStatus: {
+        status: "idle",
+        userId: 0,
+        error: "",
+    },
 };
 
 export const logIn = createAsyncThunk(
@@ -82,28 +98,36 @@ export const createUser = createAsyncThunk(
         }
 
         const response = await axios.post(
-            url(
-                '/dashboard/user/',
-            ),
+            url("/dashboard/user/"),
             { username, email },
             { headers },
         );
 
         return response.data;
-    }
-)
+    },
+);
 
 const usersSlice = createSlice({
     name: "users",
     initialState,
-    reducers: {},
+    reducers: {
+        resetStatus(state, action) {
+            state[action.payload] = initialState[action.payload];
+        },
+    },
     extraReducers(builder) {
         builder
             .addCase(logIn.pending, (state) => {
-                state.loggingInState = "loading";
+                state.loginStatus = {
+                    status: "loading",
+                    error: "",
+                };
             })
             .addCase(logIn.fulfilled, (state, action) => {
-                state.loggingInState = "success";
+                state.loginStatus = {
+                    status: "success",
+                    error: "",
+                };
                 const encodedTokenInfo = action.payload.token.split(".")[1];
 
                 const decodedTokenInfo = atob(encodedTokenInfo);
@@ -117,33 +141,48 @@ const usersSlice = createSlice({
                 };
             })
             .addCase(logIn.rejected, (state, action) => {
-                state.loggingInState = "error";
-                state.error = action.error.message;
+                state.loginStatus = {
+                    status: "error",
+                    error: action.error.message,
+                };
             })
             .addCase(fetchUsers.pending, (state) => {
-                state.fetchUsersState = "loading";
+                state.fetchUsersStatus = {
+                    status: "loading",
+                    error: "",
+                };
             })
             .addCase(fetchUsers.fulfilled, (state, action) => {
-                state.fetchUsersState = "success";
-                state.users = action.payload;
+                state.fetchUsersStatus = {
+                    status: "success",
+                    error: "",
+                };
+                state.users = {
+                    items: action.payload,
+                    hasFetched: true,
+                };
             })
             .addCase(fetchUsers.rejected, (state, action) => {
-                state.fetchUsersState = "error";
-                state.error = action.error.message;
+                state.fetchUsersStatus = {
+                    status: "error",
+                    error: action.error.message,
+                };
             })
             .addCase(changeUserRole.pending, (state, action) => {
-                state.changeRoleState = {
-                    state: "loading",
+                state.changeRoleStatus = {
+                    status: "loading",
                     userId: action.meta.arg.userId,
+                    error: "",
                 };
             })
             .addCase(changeUserRole.fulfilled, (state, action) => {
-                state.changeRoleState = {
-                    state: "success",
+                state.changeRoleStatus = {
+                    status: "success",
                     userId: action.meta.arg.userId,
+                    error: "",
                 };
                 const { userId, role, type } = action.payload;
-                const userToChange = state.users.find(
+                const userToChange = state.users.items.find(
                     (user) => user.id === userId,
                 );
                 if (type === "assign") {
@@ -155,28 +194,45 @@ const usersSlice = createSlice({
                 }
             })
             .addCase(changeUserRole.rejected, (state, action) => {
-                state.changeRoleState = {
-                    state: "error",
+                state.changeRoleStatus = {
+                    status: "error",
                     userId: action.meta.arg.userId,
+                    error: action.error.message,
                 };
-                alert(action.error.message);
-                state.error = action.error.message;
             })
             .addCase(createUser.pending, (state) => {
-                state.createUserState = "loading";
+                state.createUserStatus = {
+                    status: "loading",
+                    error: "",
+                };
             })
             .addCase(createUser.fulfilled, (state, action) => {
-                state.createUserState = "success";
-                alert(action.payload['confirmation-url']);
+                state.createUserStatus = {
+                    status: "success",
+                    error: "",
+                };
+                alert(action.payload["confirmation-url"]);
             })
             .addCase(createUser.rejected, (state, action) => {
-                state.fetchUsersState = "error";
-                state.error = action.error.message;
+                state.createUserStatus = {
+                    status: "error",
+                    error: action.error.message,
+                };
             });
     },
 });
 
 export const selectLoggedInUser = (state) => state.users.loggedInAs;
+
+export const selectUsers = (state) => state.users.users;
+
+export const selectLoginStatus = (state) => state.users.loginStatus;
+
+export const selectFetchUsersStatus = (state) => state.users.fetchUsersStatus;
+
+export const selectCreateUserStatus = (state) => state.users.createUserStatus;
+
+export const selectChangeRoleStatus = (state) => state.users.changeRoleStatus;
 
 export const isUserAdmin = (state) =>
     state.users.loggedInAs?.roles.includes("ROLE_ADMIN");
@@ -186,5 +242,7 @@ export const isUserWriter = (state) =>
 
 export const isUserEditor = (state) =>
     state.users.loggedInAs?.roles.includes("ROLE_EDITOR");
+
+export const { resetStatus } = usersSlice.actions;
 
 export default usersSlice.reducer;

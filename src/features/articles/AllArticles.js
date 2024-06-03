@@ -1,5 +1,11 @@
-import { useSelector } from "react-redux";
-import { selectArticles } from "./articlesSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+    resetStatus,
+    selectArticles,
+    selectChangePublishedArticleStatus,
+    selectCreateArticleStatus,
+    selectFetchArticlesStatus,
+} from "./articlesSlice";
 import { ArticleList } from "./ArticleList";
 import { useEffect, useState } from "react";
 import { useBackend } from "../../hooks/backend";
@@ -9,43 +15,56 @@ import { isUserEditor, isUserWriter } from "../users/usersSlice";
 import { ButtonForm } from "../../components/ButtonForm";
 
 export const AllArticles = () => {
+    const dispatch = useDispatch();
+
     const articles = useSelector(selectArticles);
-    const fetchStatus = useSelector((state) => state.articles.fetchStatus);
+    const fetchArticlesStatus = useSelector(selectFetchArticlesStatus);
     const changePublishStateStatus = useSelector(
-        (state) => state.articles.changePublishStateStatus,
+        selectChangePublishedArticleStatus,
     );
-    const createArticleState = useSelector(
-        (state) => state.articles.createArticleState,
-    );
+    const createArticleStatus = useSelector(selectCreateArticleStatus);
+
     const isWriter = useSelector(isUserWriter);
     const isEditor = useSelector(isUserEditor);
-    const error = useSelector((state) => state.articles.error);
 
     const [showForm, setShowForm] = useState(false);
     const { doCreateArticle, doFetchArticles, changeArticlePublishedState } =
         useBackend();
 
     useEffect(() => {
-        if (changePublishStateStatus.state === "error") {
-            alert(error);
+        if (changePublishStateStatus.status === "error") {
+            alert(changePublishStateStatus.error);
+            dispatch(resetStatus("changePublishStateStatus"));
         }
-    }, [changePublishStateStatus, error]);
+    }, [changePublishStateStatus, dispatch]);
 
     useEffect(() => {
-        doFetchArticles();
-    }, [doFetchArticles]);
+        if (createArticleStatus.status === "error") {
+            alert(createArticleStatus.error);
+            dispatch(resetStatus("createArticleStatus"));
+        }
+    }, [createArticleStatus, dispatch]);
+
+    useEffect(() => {
+        if (fetchArticlesStatus.status === "error") {
+            alert(fetchArticlesStatus.error);
+            dispatch(resetStatus("fetchArticlesStatus"));
+        }
+    }, [fetchArticlesStatus, dispatch]);
+
+    useEffect(() => {
+        if (!articles.hasFetched) {
+            doFetchArticles();
+        }
+    }, [doFetchArticles, articles]);
 
     const onSubmit = async ({ title, content, summary }) => {
-        if (title && content && summary) {
-            const response = await doCreateArticle({ title, content, summary });
-            if (response.type.endsWith("fulfilled")) {
-                alert("Article created");
-            } else {
-                alert("Creation unsuccessful");
-            }
-
-            setShowForm(false);
+        const response = await doCreateArticle({ title, content, summary });
+        if (response.type.endsWith("fulfilled")) {
+            alert("Article created");
         }
+
+        setShowForm(false);
     };
 
     const returnPublishButton = (article) => {
@@ -56,7 +75,7 @@ export const AllArticles = () => {
                     onClick={() =>
                         changeArticlePublishedState({ articleId: article.id })
                     }
-                    disabled={changePublishStateStatus.state === "loading"}
+                    disabled={changePublishStateStatus.status === "loading"}
                 >
                     {article.isPublished ? "Unpublish" : "Publish"}
                 </button>
@@ -66,22 +85,27 @@ export const AllArticles = () => {
 
     return (
         <>
-            {isWriter &&
-                <ButtonForm showForm={showForm} triggerShowForm={() => setShowForm(prev => !prev)} showFormText="Create Article">
+            {isWriter && (
+                <ButtonForm
+                    showForm={showForm}
+                    triggerShowForm={() => setShowForm((prev) => !prev)}
+                    showFormText="Create Article"
+                >
                     <LoadingItem
                         className="w-50"
-                        isLoading={createArticleState === "loading"}
+                        isLoading={createArticleStatus.status === "loading"}
                     >
                         <ArticleForm
                             onCancel={() => setShowForm((prev) => !prev)}
                             onSubmit={onSubmit}
                         />
                     </LoadingItem>
-                </ButtonForm>}
+                </ButtonForm>
+            )}
             <ArticleList
-                articles={articles}
-                fetchStatus={fetchStatus}
-                error={error}
+                articles={articles.items}
+                fetchStatus={fetchArticlesStatus.status}
+                error={fetchArticlesStatus.error}
                 elementsFunction={returnPublishButton}
                 itemState={changePublishStateStatus}
             ></ArticleList>

@@ -37,10 +37,13 @@ export const useBackend = () => {
     }, [dispatch, loggedInUser]);
 
     const doLogin = async ({ username, password }) => {
-        dispatch(logIn({ username, password }));
+        const response = await dispatch(logIn({ username, password }));
+        if (response.type.endsWith("fulfilled")) {
+            dispatch(fetchArticles({ token: response.payload.token }));
+        }
     };
 
-    const assignRole = async ({ userId, role }) => {
+    const assignRole = ({ userId, role }) => {
         dispatch(
             changeUserRole({
                 token: loggedInUser.token,
@@ -51,7 +54,7 @@ export const useBackend = () => {
         );
     };
 
-    const removeRole = async ({ userId, role }) => {
+    const removeRole = ({ userId, role }) => {
         dispatch(
             changeUserRole({
                 token: loggedInUser.token,

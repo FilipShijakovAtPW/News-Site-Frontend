@@ -1,7 +1,6 @@
 import { ArticleItem } from "./ArticleItem";
 import { Link } from "react-router-dom";
 import { ListingComponent } from "../../components/ListingComponent";
-import { useSelector } from "react-redux";
 import { LoadingItem } from "../../components/LoadingItem";
 
 export const ArticleList = ({
@@ -11,10 +10,6 @@ export const ArticleList = ({
     elementsFunction,
     itemState,
 }) => {
-    const changePublishStateStatus = useSelector(
-        (state) => state.articles.changePublishStateStatus,
-    );
-
     return (
         <ListingComponent error={error} status={fetchStatus}>
             {articles.map((article) => (
@@ -23,7 +18,7 @@ export const ArticleList = ({
                     key={article.id}
                     isLoading={
                         itemState &&
-                        itemState.state === "loading" &&
+                        itemState.status === "loading" &&
                         itemState.id === article.id
                     }
                 >

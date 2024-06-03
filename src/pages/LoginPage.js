@@ -1,26 +1,28 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useBackend } from "../hooks/backend";
+import { selectLoginStatus, resetStatus } from "../features/users/usersSlice";
 
 export const LoginPage = () => {
+    const dispatch = useDispatch();
     const { doLogin } = useBackend();
     const naviagete = useNavigate();
-    const loginState = useSelector((state) => state.users.loggingInState);
-    const loginError = useSelector((state) => state.users.error);
+    const loginStatus = useSelector(selectLoginStatus);
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
     useEffect(() => {
-        if (loginState === "error") {
-            alert(loginError);
+        if (loginStatus.status === "error") {
+            alert(loginStatus.error);
             setPassword("");
+            dispatch(resetStatus("loginStatus"));
         }
-        if (loginState === "success") {
+        if (loginStatus.status === "success") {
             naviagete("/dashboard");
         }
-    }, [loginState, loginError, naviagete]);
+    }, [loginStatus, naviagete, dispatch]);
 
     const handleLogin = (event) => {
         event.preventDefault();
@@ -55,7 +57,7 @@ export const LoginPage = () => {
                 <button
                     type="submit"
                     className="btn btn-primary"
-                    disabled={loginState === "loading"}
+                    disabled={loginStatus.status === "loading"}
                 >
                     Submit
                 </button>
