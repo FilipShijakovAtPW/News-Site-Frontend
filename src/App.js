@@ -5,6 +5,7 @@ import { AllArticles } from "./features/articles/AllArticles";
 import { SingleArticle } from "./features/articles/SingleArticle";
 import { UserArticles } from "./features/articles/UserArticles";
 import { UserList } from "./features/users/UserList";
+import { EditArticle } from "./features/articles/EditArticle";
 
 function App() {
     return (
@@ -16,6 +17,10 @@ function App() {
                         <Route
                             path="article/:articleId"
                             element={<SingleArticle />}
+                        />
+                        <Route
+                            path="article/:articleId/edit"
+                            element={<EditArticle />}
                         />
                         <Route
                             path="user-article"

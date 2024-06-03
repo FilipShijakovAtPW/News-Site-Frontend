@@ -7,6 +7,7 @@ const initialState = {
     users: [],
     loggingInState: "idle",
     fetchUsersState: "idle",
+    createUserState: "idle",
     changeRoleState: {
         state: "idle",
         userId: 0,
@@ -69,6 +70,28 @@ export const changeUserRole = createAsyncThunk(
         };
     },
 );
+
+export const createUser = createAsyncThunk(
+    "users/createUser",
+    async (options) => {
+        const { token, username, email } = options;
+        let headers = {};
+
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await axios.post(
+            url(
+                '/dashboard/user/',
+            ),
+            { username, email },
+            { headers },
+        );
+
+        return response.data;
+    }
+)
 
 const usersSlice = createSlice({
     name: "users",
@@ -137,6 +160,17 @@ const usersSlice = createSlice({
                     userId: action.meta.arg.userId,
                 };
                 alert(action.error.message);
+                state.error = action.error.message;
+            })
+            .addCase(createUser.pending, (state) => {
+                state.createUserState = "loading";
+            })
+            .addCase(createUser.fulfilled, (state, action) => {
+                state.createUserState = "success";
+                alert(action.payload['confirmation-url']);
+            })
+            .addCase(createUser.rejected, (state, action) => {
+                state.fetchUsersState = "error";
                 state.error = action.error.message;
             });
     },

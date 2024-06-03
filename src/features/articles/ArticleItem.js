@@ -1,7 +1,12 @@
 import { formatDate } from "../../functions/dateFromStringExtractor";
 import { trimText } from "../../functions/textTrimmer";
 
-export const ArticleItem = ({ article, children, shouldTrim = false, className }) => {
+export const ArticleItem = ({
+    article,
+    children,
+    shouldTrim = false,
+    className,
+}) => {
     const date = formatDate(article.published);
 
     const title = shouldTrim ? trimText(article.title, 50) : article.title;
@@ -13,7 +18,7 @@ export const ArticleItem = ({ article, children, shouldTrim = false, className }
         : article.content;
 
     return (
-        <div className={className}>
+        <div className={`card ${className}`}>
             <div className="card-header d-flex justify-content-between">
                 <span className="text-muted">{article.user.username}</span>{" "}
                 <span>{date}</span>

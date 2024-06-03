@@ -1,10 +1,16 @@
 import { useDispatch, useSelector } from "react-redux";
-import { changePublishedState, fetchArticles } from "../features/articles/articlesSlice";
+import {
+    changePublishedState,
+    createArticle,
+    editArticle,
+    fetchArticles,
+} from "../features/articles/articlesSlice";
 import {
     selectLoggedInUser,
     logIn,
     fetchUsers,
     changeUserRole,
+    createUser,
 } from "../features/users/usersSlice";
 import { useCallback } from "react";
 
@@ -57,7 +63,38 @@ export const useBackend = () => {
     };
 
     const changeArticlePublishedState = ({ articleId }) => {
-        dispatch(changePublishedState({ token: loggedInUser.token, articleId }));
+        dispatch(
+            changePublishedState({ token: loggedInUser.token, articleId }),
+        );
+    };
+
+    const doCreateArticle = ({ title, content, summary }) => {
+        return dispatch(
+            createArticle({
+                title,
+                summary,
+                content,
+                token: loggedInUser.token,
+            }),
+        );
+    };
+
+    const doEditArticle = ({ articleId, title, content, summary }) => {
+        return dispatch(
+            editArticle({
+                articleId,
+                title,
+                summary,
+                content,
+                token: loggedInUser.token,
+            }),
+        );
+    };
+
+    const doCreateUser = ({ username, email }) => {
+        return dispatch(
+            createUser({ token: loggedInUser.token, username, email }),
+        );
     };
 
     return {
@@ -68,5 +105,8 @@ export const useBackend = () => {
         assignRole,
         removeRole,
         changeArticlePublishedState,
+        doCreateArticle,
+        doEditArticle,
+        doCreateUser,
     };
 };

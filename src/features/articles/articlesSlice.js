@@ -9,6 +9,8 @@ const initialState = {
         id: 0,
         state: "idle",
     },
+    createArticleState: "idle",
+    editArticleState: "idle",
     error: "",
 };
 
@@ -54,6 +56,44 @@ export const changePublishedState = createAsyncThunk(
     },
 );
 
+export const createArticle = createAsyncThunk(
+    "articles/createArticle",
+    async (options) => {
+        const { token, title, content, summary } = options;
+        let headers = {};
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await axios.post(
+            url("/dashboard/article"),
+            { title, content, summary },
+            { headers },
+        );
+
+        return response.data;
+    },
+);
+
+export const editArticle = createAsyncThunk(
+    "articles/editArticle",
+    async (options) => {
+        const { token, articleId, title, content, summary } = options;
+        let headers = {};
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await axios.put(
+            url(`/dashboard/article/${articleId}`),
+            { title, content, summary },
+            { headers },
+        );
+
+        return response.data;
+    },
+);
+
 const articlesSlice = createSlice({
     name: "articles",
     initialState,
@@ -82,12 +122,12 @@ const articlesSlice = createSlice({
                     state: "success",
                     id: articleId,
                 };
-                state.items = state.items.map(item => {
+                state.items = state.items.map((item) => {
                     if (item.id === articleId) {
                         return {
                             ...item,
                             isPublished: !item.isPublished,
-                        }
+                        };
                     }
                     return item;
                 });
@@ -97,6 +137,31 @@ const articlesSlice = createSlice({
                     state: "error",
                     id: action.meta.arg.articleId,
                 };
+                state.error = action.error.message;
+            })
+            .addCase(createArticle.pending, (state) => {
+                state.createArticleState = "loading";
+            })
+            .addCase(createArticle.fulfilled, (state) => {
+                state.createArticleState = "success";
+            })
+            .addCase(createArticle.rejected, (state, action) => {
+                state.createArticleState = "error";
+                state.error = action.error.message;
+            })
+            .addCase(editArticle.pending, (state) => {
+                state.editArticleState = "loading";
+            })
+            .addCase(editArticle.fulfilled, (state, action) => {
+                state.editArticleState = "success";
+                const {id, title, content, summary} = action.payload;
+                let articleItem = state.items.find(article => article.id === id);
+                articleItem.title = title;
+                articleItem.content = content;
+                articleItem.summary = summary;
+            })
+            .addCase(editArticle.rejected, (state, action) => {
+                state.editArticleState = "error";
                 state.error = action.error.message;
             });
     },
