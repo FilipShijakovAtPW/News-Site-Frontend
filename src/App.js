@@ -4,6 +4,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { AllArticles } from "./features/articles/AllArticles";
 import { SingleArticle } from "./features/articles/SingleArticle";
 import { UserArticles } from "./features/articles/UserArticles";
+import { UserList } from "./features/users/UserList";
 
 function App() {
     return (
@@ -19,6 +20,10 @@ function App() {
                         <Route
                             path="user-article"
                             element={<UserArticles />}
+                        />
+                        <Route 
+                            path="user"
+                            element={<UserList />}
                         />
                         <Route
                             path=""

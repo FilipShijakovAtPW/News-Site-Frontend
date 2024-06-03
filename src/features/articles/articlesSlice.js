@@ -5,6 +5,10 @@ import { url } from "../../functions/urlGenerator";
 const initialState = {
     items: [],
     fetchStatus: "idle",
+    changePublishStateStatus: {
+        id: 0,
+        state: "idle",
+    },
     error: "",
 };
 
@@ -32,6 +36,24 @@ export const fetchArticles = createAsyncThunk(
     },
 );
 
+export const changePublishedState = createAsyncThunk(
+    "articles/publishArticle",
+    async (options) => {
+        const { token, articleId } = options;
+        let headers = {};
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await axios.get(
+            url(`/dashboard/article/${articleId}/change-published-state`),
+            { headers },
+        );
+
+        return response.data;
+    },
+);
+
 const articlesSlice = createSlice({
     name: "articles",
     initialState,
@@ -46,6 +68,35 @@ const articlesSlice = createSlice({
             })
             .addCase(fetchArticles.rejected, (state, action) => {
                 state.fetchStatus = "error";
+                state.error = action.error.message;
+            })
+            .addCase(changePublishedState.pending, (state, action) => {
+                state.changePublishStateStatus = {
+                    state: "loading",
+                    id: action.meta.arg.articleId,
+                };
+            })
+            .addCase(changePublishedState.fulfilled, (state, action) => {
+                const articleId = action.meta.arg.articleId;
+                state.changePublishStateStatus.state = {
+                    state: "success",
+                    id: articleId,
+                };
+                state.items = state.items.map(item => {
+                    if (item.id === articleId) {
+                        return {
+                            ...item,
+                            isPublished: !item.isPublished,
+                        }
+                    }
+                    return item;
+                });
+            })
+            .addCase(changePublishedState.rejected, (state, action) => {
+                state.changePublishStateStatus.state = {
+                    state: "error",
+                    id: action.meta.arg.articleId,
+                };
                 state.error = action.error.message;
             });
     },

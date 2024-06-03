@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { selectArticles } from "./articlesSlice";
 import { ArticleList } from "./ArticleList";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useBackend } from "../../hooks/backend";
 
 export const AllArticles = () => {
@@ -9,7 +9,6 @@ export const AllArticles = () => {
     const fetchStatus = useSelector((state) => state.articles.fetchStatus);
     const error = useSelector((state) => state.articles.error);
     const { doFetchArticles } = useBackend();
-    const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
         doFetchArticles();

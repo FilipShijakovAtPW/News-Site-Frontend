@@ -18,7 +18,7 @@ export const SingleArticle = () => {
                 <div className="w-50">
                     <div className="btn" onClick={() => navigate(-1)}>Back</div>
                 </div>
-                <ArticleItem article={article} />
+                <ArticleItem className="card m-3 w-50 position-relative" article={article} />
             </>
         );
     } else {
