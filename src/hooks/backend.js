@@ -22,24 +22,39 @@ export const useBackend = () => {
         dispatch(fetchUsers({ token: loggedInUser.token }));
     }, [dispatch, loggedInUser]);
 
-    const doFetchArticles = useCallback(() => {
-        if (loggedInUser) {
-            dispatch(fetchArticles({ token: loggedInUser.token }));
-        } else {
-            dispatch(fetchArticles({}));
-        }
-    }, [dispatch, loggedInUser]);
+    const doFetchArticles = useCallback(
+        ({ page = 1, filters = {} }) => {
+            if (loggedInUser) {
+                dispatch(
+                    fetchArticles({ page, filters, token: loggedInUser.token }),
+                );
+            } else {
+                dispatch(fetchArticles({ page, filters }));
+            }
+        },
+        [dispatch, loggedInUser],
+    );
 
-    const doFetchUserArticles = useCallback(() => {
-        dispatch(
-            fetchArticles({ token: loggedInUser.token, userArticles: true }),
-        );
-    }, [dispatch, loggedInUser]);
+    const doFetchUserArticles = useCallback(
+        ({ page = 1, filters = {} }) => {
+            dispatch(
+                fetchArticles({
+                    page,
+                    filters,
+                    token: loggedInUser.token,
+                    userArticles: true,
+                }),
+            );
+        },
+        [dispatch, loggedInUser],
+    );
 
     const doLogin = async ({ username, password }) => {
         const response = await dispatch(logIn({ username, password }));
+        const token = response.payload.token;
+        localStorage.setItem('jwtToken', token);
         if (response.type.endsWith("fulfilled")) {
-            dispatch(fetchArticles({ token: response.payload.token }));
+            dispatch(fetchArticles({ token: response.payload.token, page: 1 }));
         }
     };
 

@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { url } from "../../functions/urlGenerator";
+import { extractTokenInfo } from "../../functions/extractTokenInfo";
 
 const initialState = {
     loggedInAs: {
@@ -114,6 +115,25 @@ const usersSlice = createSlice({
         resetStatus(state, action) {
             state[action.payload] = initialState[action.payload];
         },
+        setToken(state, action) {
+            const [username, roles, token] = extractTokenInfo(action.payload);
+
+            state.loggedInAs = {
+                username,
+                roles,
+                token,
+            };
+
+            state.loginStatus = {
+                status: "success",
+                error: "",
+            };
+        },
+        loggedOut(state) {
+            state.loggedInAs = initialState.loggedInAs;
+            state.loginStatus = initialState.loginStatus;
+            localStorage.removeItem('jwtToken');
+        },
     },
     extraReducers(builder) {
         builder
@@ -128,16 +148,15 @@ const usersSlice = createSlice({
                     status: "success",
                     error: "",
                 };
-                const encodedTokenInfo = action.payload.token.split(".")[1];
 
-                const decodedTokenInfo = atob(encodedTokenInfo);
-
-                const tokenInfo = JSON.parse(decodedTokenInfo);
+                const [username, roles, token] = extractTokenInfo(
+                    action.payload.token,
+                );
 
                 state.loggedInAs = {
-                    username: tokenInfo.username,
-                    roles: tokenInfo.roles,
-                    token: action.payload.token,
+                    username,
+                    roles,
+                    token,
                 };
             })
             .addCase(logIn.rejected, (state, action) => {
@@ -243,6 +262,6 @@ export const isUserWriter = (state) =>
 export const isUserEditor = (state) =>
     state.users.loggedInAs?.roles.includes("ROLE_EDITOR");
 
-export const { resetStatus } = usersSlice.actions;
+export const { resetStatus, setToken, loggedOut } = usersSlice.actions;
 
 export default usersSlice.reducer;

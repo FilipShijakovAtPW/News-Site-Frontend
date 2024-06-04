@@ -54,7 +54,7 @@ export const AllArticles = () => {
 
     useEffect(() => {
         if (!articles.hasFetched) {
-            doFetchArticles();
+            doFetchArticles({});
         }
     }, [doFetchArticles, articles]);
 
@@ -83,6 +83,23 @@ export const AllArticles = () => {
         );
     };
 
+    const onNextPagination = () => {
+        const { page } = articles;
+        doFetchArticles({ page: page + 1 });
+    };
+
+    const onPrevPagination = () => {
+        const { page } = articles;
+        if (page === 1) {
+            return;
+        }
+        doFetchArticles({ page: page - 1 });
+    };
+
+    const onSetFilters = (filters) => {
+        doFetchArticles({ page: 1, filters });
+    };
+
     return (
         <>
             {isWriter && (
@@ -90,9 +107,10 @@ export const AllArticles = () => {
                     showForm={showForm}
                     triggerShowForm={() => setShowForm((prev) => !prev)}
                     showFormText="Create Article"
+                    className="mb-3"
                 >
                     <LoadingItem
-                        className="w-50"
+                        className="w-50 mb-3"
                         isLoading={createArticleStatus.status === "loading"}
                     >
                         <ArticleForm
@@ -108,6 +126,12 @@ export const AllArticles = () => {
                 error={fetchArticlesStatus.error}
                 elementsFunction={returnPublishButton}
                 itemState={changePublishStateStatus}
+                currentPagePagination={articles.page}
+                onNextPagination={onNextPagination}
+                onPrevPagination={onPrevPagination}
+                disableNextPagination={articles.items.length < 10}
+                setFilters={onSetFilters}
+                filters={articles.filters}
             ></ArticleList>
         </>
     );

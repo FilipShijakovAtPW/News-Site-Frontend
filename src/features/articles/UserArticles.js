@@ -16,22 +16,45 @@ export const UserArticles = () => {
 
     useEffect(() => {
         if (!articles.hasFetched) {
-            doFetchUserArticles();
+            doFetchUserArticles({});
         }
     }, [articles, doFetchUserArticles]);
 
     useEffect(() => {
-        if (fetchStatus.status === 'error') {
+        if (fetchStatus.status === "error") {
             alert(fetchStatus.error);
-            dispatch(resetStatus('fetchUserArticlesStatus'))
+            dispatch(resetStatus("fetchUserArticlesStatus"));
         }
-    }, [fetchStatus, dispatch])
+    }, [fetchStatus, dispatch]);
+
+    const onNextPagination = () => {
+        const { page } = articles;
+        doFetchUserArticles({ page: page + 1 });
+    };
+
+    const onPrevPagination = () => {
+        const { page } = articles;
+        if (page === 1) {
+            return;
+        }
+        doFetchUserArticles({ page: page - 1 });
+    };
+
+    const onSetFilters = (filters) => {
+        doFetchUserArticles({ page: 1, filters });
+    };
 
     return (
         <ArticleList
             articles={articles.items}
             fetchStatus={fetchStatus.status}
             error={fetchStatus.error}
+            currentPagePagination={articles.page}
+            onNextPagination={onNextPagination}
+            onPrevPagination={onPrevPagination}
+            disableNextPagination={articles.items.length < 10}
+            setFilters={onSetFilters}
+            filters={articles.filters}
         />
     );
 };

@@ -6,10 +6,14 @@ const initialState = {
     articles: {
         items: [],
         hasFetched: false,
+        page: 0,
+        filters: {},
     },
     userArticles: {
         items: [],
         hasFetched: false,
+        page: 0,
+        filters: {},
     },
     fetchArticlesStatus: {
         status: "idle",
@@ -45,7 +49,7 @@ const getHeaders = ({ token }) => {
 export const fetchArticles = createAsyncThunk(
     "articles/fetchArticles",
     async (options) => {
-        const { userArticles = false } = options;
+        const { userArticles = false, page = 1, filters = {} } = options;
         const headers = getHeaders(options);
 
         let response;
@@ -53,10 +57,18 @@ export const fetchArticles = createAsyncThunk(
         if (userArticles) {
             response = await axios.get(url("/dashboard/user-article"), {
                 headers,
+                params: {
+                    pageNumber: page,
+                    ...filters,
+                },
             });
         } else {
             response = await axios.get(url("/dashboard/article"), {
                 headers,
+                params: {
+                    pageNumber: page,
+                    ...filters,
+                },
             });
         }
         return response.data;
@@ -136,6 +148,7 @@ const articlesSlice = createSlice({
             })
             .addCase(fetchArticles.fulfilled, (state, action) => {
                 const { userArticles } = action.meta.arg;
+                const { page, filters } = action.meta.arg;
                 if (userArticles) {
                     state.fetchUserArticlesStatus = {
                         status: "success",
@@ -144,6 +157,8 @@ const articlesSlice = createSlice({
                     state.userArticles = {
                         items: action.payload,
                         hasFetched: true,
+                        page,
+                        filters,
                     };
                 } else {
                     state.fetchArticlesStatus = {
@@ -153,6 +168,8 @@ const articlesSlice = createSlice({
                     state.articles = {
                         items: action.payload,
                         hasFetched: true,
+                        page,
+                        filters,
                     };
                 }
             })
@@ -261,7 +278,11 @@ export const selectArticles = (state) => state.articles.articles;
 
 export const selectUserArticles = (state) => state.articles.userArticles;
 
-export const selectSingleArticle = (state, articleId) => [...state.articles.articles.items, ...state.articles.userArticles.items].find(a => a.id === Number(articleId)); 
+export const selectSingleArticle = (state, articleId) =>
+    [
+        ...state.articles.articles.items,
+        ...state.articles.userArticles.items,
+    ].find((a) => a.id === Number(articleId));
 
 export const selectFetchArticlesStatus = (state) =>
     state.articles.fetchArticlesStatus;

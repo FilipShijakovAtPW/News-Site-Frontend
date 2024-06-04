@@ -1,7 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import {
     resetStatus,
-    selectArticles,
     selectEditArticleStatus,
     selectSingleArticle,
 } from "./articlesSlice";

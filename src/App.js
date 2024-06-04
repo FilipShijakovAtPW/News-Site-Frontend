@@ -6,8 +6,20 @@ import { SingleArticle } from "./features/articles/SingleArticle";
 import { UserArticles } from "./features/articles/UserArticles";
 import { UserList } from "./features/users/UserList";
 import { EditArticle } from "./features/articles/EditArticle";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { setToken } from "./features/users/usersSlice";
 
 function App() {
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        const token = localStorage.getItem('jwtToken');
+        if (token) {
+            dispatch(setToken(token));
+        }
+    }, [])
+
     return (
         <div>
             <BrowserRouter>
