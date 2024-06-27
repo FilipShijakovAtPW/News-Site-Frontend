@@ -1,8 +1,7 @@
 import { useSelector } from "react-redux";
-import { selectSingleArticle } from "./articlesSlice";
 import { ArticleItem } from "./ArticleItem";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { isUserWriter, selectLoggedInUser } from "../users/usersSlice";
+import { isUserWriter, selectLoggedInUser, selectSingleArticle } from "../../data/selectors/selectors";
 
 export const SingleArticle = () => {
     const { articleId } = useParams();

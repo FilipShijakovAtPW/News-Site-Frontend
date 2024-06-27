@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { useBackend } from "../hooks/backend";
-import { selectLoginStatus, resetStatus } from "../features/users/usersSlice";
+import { selectLoginStatus } from "../data/selectors/selectors";
+import { login, resetUserStatus } from "../data/actions/users";
+import { fetchArticles } from "../data/actions/articles";
 
 export const LoginPage = () => {
     const dispatch = useDispatch();
-    const { doLogin } = useBackend();
     const naviagete = useNavigate();
     const loginStatus = useSelector(selectLoginStatus);
 
@@ -17,16 +17,17 @@ export const LoginPage = () => {
         if (loginStatus.status === "error") {
             alert(loginStatus.error);
             setPassword("");
-            dispatch(resetStatus("loginStatus"));
+            dispatch(resetUserStatus("loginStatus"));
         }
         if (loginStatus.status === "success") {
+            dispatch(fetchArticles({}));
             naviagete("/dashboard");
         }
     }, [loginStatus, naviagete, dispatch]);
 
     const handleLogin = (event) => {
         event.preventDefault();
-        doLogin({ username, password });
+        dispatch(login({ username, password }));
     };
 
     return (

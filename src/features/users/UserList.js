@@ -1,21 +1,15 @@
 import { useEffect, useState } from "react";
-import { useBackend } from "../../hooks/backend";
 import { useDispatch, useSelector } from "react-redux";
 import { ListingComponent } from "../../components/ListingComponent";
 import { UserItem } from "./UserItem";
 import { ButtonForm } from "../../components/ButtonForm";
 import { UserForm } from "./UserForm";
-import {
-    selectCreateUserStatus,
-    selectFetchUsersStatus,
-    selectUsers,
-} from "./usersSlice";
-import { resetStatus } from "../users/usersSlice";
 import { LoadingItem } from "../../components/LoadingItem";
+import { createUser, fetchUsers, resetUserStatus } from "../../data/actions/users";
+import { selectCreateUserStatus, selectFetchUsersStatus, selectUsers } from "../../data/selectors/selectors";
 
 export const UserList = () => {
     const dispatch = useDispatch();
-    const { doFetchUsers, doCreateUser } = useBackend();
     const users = useSelector(selectUsers);
     const fetchUsersStatus = useSelector(selectFetchUsersStatus);
     const createUserStatus = useSelector(selectCreateUserStatus);
@@ -24,26 +18,26 @@ export const UserList = () => {
 
     useEffect(() => {
         if (!users.hasFetched) {
-            doFetchUsers();
+            dispatch(fetchUsers());
         }
-    }, [users, doFetchUsers]);
+    }, [users]);
 
     useEffect(() => {
         if (fetchUsersStatus.status === "error") {
             alert(fetchUsersStatus.error);
-            dispatch(resetStatus("createUserStatus"));
+            dispatch(resetUserStatus("createUserStatus"));
         }
     }, [fetchUsersStatus, dispatch]);
 
     useEffect(() => {
         if (createUserStatus.status === "error") {
             alert(createUserStatus.error);
-            dispatch(resetStatus("createUserStatus"));
+            dispatch(resetUserStatus("createUserStatus"));
         }
     }, [createUserStatus, dispatch]);
 
     const onSubmit = async ({ username, email }) => {
-        await doCreateUser({ username, email });
+        await dispatch(createUser({ username, email }));
         setShowForm(false);
     };
 

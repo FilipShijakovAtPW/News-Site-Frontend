@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
-import { loggedOut, selectLoggedInUser, selectLoginStatus } from "./usersSlice";
 import { Link } from "react-router-dom";
+import { selectLoggedInUser, selectLoginStatus } from "../../data/selectors/selectors";
+import { logout } from "../../data/actions/users";
 
 export const LoggedInUserStatus = () => {
     const dispatch = useDispatch();
@@ -18,7 +19,7 @@ export const LoggedInUserStatus = () => {
     } else if (loginStatus.status === "success") {
         content = <>
         <span>{loggedInUser.username}</span>
-        <button className="btn" onClick={() => dispatch(loggedOut())}>Log out</button>
+        <button className="btn" onClick={() => dispatch(logout())}>Log out</button>
         </>;
     }
 

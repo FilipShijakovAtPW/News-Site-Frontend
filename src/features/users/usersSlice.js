@@ -58,7 +58,7 @@ export const fetchUsers = createAsyncThunk(
             headers,
         });
 
-        return request.data;
+        return request.data.data;
     },
 );
 

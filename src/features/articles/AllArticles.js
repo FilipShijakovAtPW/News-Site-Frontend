@@ -1,22 +1,20 @@
 import { useDispatch, useSelector } from "react-redux";
-import {
-    resetStatus,
-    selectArticles,
-    selectChangePublishedArticleStatus,
-    selectCreateArticleStatus,
-    selectFetchArticlesStatus,
-} from "./articlesSlice";
 import { ArticleList } from "./ArticleList";
 import { useEffect, useState } from "react";
-import { useBackend } from "../../hooks/backend";
 import { ArticleForm } from "./ArticleForm";
 import { LoadingItem } from "../../components/LoadingItem";
 import { isUserEditor, isUserWriter } from "../users/usersSlice";
 import { ButtonForm } from "../../components/ButtonForm";
+import {
+    selectArticles,
+    selectFetchArticlesStatus,
+    selectChangePublishedArticleStatus,
+    selectCreateArticleStatus,
+} from "../../data/selectors/selectors";
+import {createArticle, fetchArticles, publishArticle, resetArticlesStatus} from "../../data/actions/articles"
 
 export const AllArticles = () => {
     const dispatch = useDispatch();
-
     const articles = useSelector(selectArticles);
     const fetchArticlesStatus = useSelector(selectFetchArticlesStatus);
     const changePublishStateStatus = useSelector(
@@ -28,39 +26,37 @@ export const AllArticles = () => {
     const isEditor = useSelector(isUserEditor);
 
     const [showForm, setShowForm] = useState(false);
-    const { doCreateArticle, doFetchArticles, changeArticlePublishedState } =
-        useBackend();
 
     useEffect(() => {
         if (changePublishStateStatus.status === "error") {
             alert(changePublishStateStatus.error);
-            dispatch(resetStatus("changePublishStateStatus"));
+            dispatch(resetArticlesStatus("changePublishStateStatus"));
         }
     }, [changePublishStateStatus, dispatch]);
 
     useEffect(() => {
         if (createArticleStatus.status === "error") {
             alert(createArticleStatus.error);
-            dispatch(resetStatus("createArticleStatus"));
+            dispatch(resetArticlesStatus("createArticleStatus"));
         }
     }, [createArticleStatus, dispatch]);
 
     useEffect(() => {
         if (fetchArticlesStatus.status === "error") {
             alert(fetchArticlesStatus.error);
-            dispatch(resetStatus("fetchArticlesStatus"));
+            dispatch(resetArticlesStatus("fetchArticlesStatus"));
         }
     }, [fetchArticlesStatus, dispatch]);
 
     useEffect(() => {
         if (!articles.hasFetched) {
-            doFetchArticles({});
+            dispatch(fetchArticles({}));
         }
-    }, [doFetchArticles, articles]);
+    }, [articles, dispatch]);
 
     const onSubmit = async ({ title, content, summary }) => {
-        const response = await doCreateArticle({ title, content, summary });
-        if (response.type.endsWith("fulfilled")) {
+        const response = await dispatch(createArticle({ title, content, summary }));
+        if (response.type.endsWith("SUCCESS")) {
             alert("Article created");
         }
 
@@ -73,7 +69,7 @@ export const AllArticles = () => {
                 <button
                     className={`btn ${article.isPublished ? "btn-danger" : "btn-primary"} ms-3`}
                     onClick={() =>
-                        changeArticlePublishedState({ articleId: article.id })
+                        dispatch(publishArticle({ articleId: article.id }))
                     }
                     disabled={changePublishStateStatus.status === "loading"}
                 >
@@ -85,7 +81,7 @@ export const AllArticles = () => {
 
     const onNextPagination = () => {
         const { page } = articles;
-        doFetchArticles({ page: page + 1 });
+        dispatch(fetchArticles({ page: page + 1 }));
     };
 
     const onPrevPagination = () => {
@@ -93,11 +89,11 @@ export const AllArticles = () => {
         if (page === 1) {
             return;
         }
-        doFetchArticles({ page: page - 1 });
+        dispatch(fetchArticles({ page: page - 1 }));
     };
 
     const onSetFilters = (filters) => {
-        doFetchArticles({ page: 1, filters });
+        dispatch(fetchArticles({ page: 1, filters }));
     };
 
     return (

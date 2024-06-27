@@ -1,26 +1,21 @@
 import { useDispatch, useSelector } from "react-redux";
-import {
-    resetStatus,
-    selectEditArticleStatus,
-    selectSingleArticle,
-} from "./articlesSlice";
-import { useBackend } from "../../hooks/backend";
 import { ArticleForm } from "./ArticleForm";
 import { LoadingItem } from "../../components/LoadingItem";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect } from "react";
+import { editArticle, resetArticlesStatus } from "../../data/actions/articles";
+import { selectEditArticleStatus, selectSingleArticle } from "../../data/selectors/selectors";
 
 export const EditArticle = () => {
     const dispatch = useDispatch();
     const { articleId } = useParams();
     const navigate = useNavigate();
-    const { doEditArticle } = useBackend();
     const editArticleStatus = useSelector(selectEditArticleStatus);
 
     useEffect(() => {
         if (editArticleStatus.status === "error") {
             alert(editArticleStatus.error);
-            dispatch(resetStatus("editArticleStatus"));
+            dispatch(resetArticlesStatus("editArticleStatus"));
         }
     }, [editArticleStatus, dispatch]);
 
@@ -31,13 +26,13 @@ export const EditArticle = () => {
     };
 
     const onSave = async ({ title, summary, content }) => {
-        const response = await doEditArticle({
+        const response = await dispatch(editArticle({
             articleId,
             title,
             summary,
             content,
-        });
-        if (response.type.endsWith("fulfilled")) {
+        }));
+        if (response.type.endsWith("SUCCESS")) {
             alert("Article Eddited");
         }
         navigate(-1);

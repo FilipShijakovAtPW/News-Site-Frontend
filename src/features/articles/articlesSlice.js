@@ -49,6 +49,7 @@ const getHeaders = ({ token }) => {
 export const fetchArticles = createAsyncThunk(
     "articles/fetchArticles",
     async (options) => {
+        // articles/fetchArticles/pending
         const { userArticles = false, page = 1, filters = {} } = options;
         const headers = getHeaders(options);
 
@@ -71,7 +72,8 @@ export const fetchArticles = createAsyncThunk(
                 },
             });
         }
-        return response.data;
+        return response.data.data;
+        // articles/fetchArticles/successful
     },
 );
 
@@ -91,7 +93,7 @@ export const changePublishedState = createAsyncThunk(
 );
 
 export const createArticle = createAsyncThunk(
-    "articles/createArticle",
+    "articles/createArticle/pending",
     async (options) => {
         const { title, content, summary } = options;
         const headers = getHeaders(options);
@@ -102,7 +104,7 @@ export const createArticle = createAsyncThunk(
             { headers },
         );
 
-        return response.data;
+        return response.data.data;
     },
 );
 
@@ -282,7 +284,7 @@ export const selectSingleArticle = (state, articleId) =>
     [
         ...state.articles.articles.items,
         ...state.articles.userArticles.items,
-    ].find((a) => a.id === Number(articleId));
+    ].find((a) => a.id === articleId);
 
 export const selectFetchArticlesStatus = (state) =>
     state.articles.fetchArticlesStatus;

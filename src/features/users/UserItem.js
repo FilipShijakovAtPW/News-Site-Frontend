@@ -1,37 +1,45 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useBackend } from "../../hooks/backend";
 import { RoleItem } from "./RoleItem";
 import { LoadingItem } from "../../components/LoadingItem";
 import { useEffect } from "react";
-import { selectChangeRoleStatus } from "./usersSlice";
-import { resetStatus } from "../users/usersSlice";
+import { selectChangeRoleStatus } from "../../data/selectors/selectors";
+import {
+    assignRole,
+    removeRole,
+    resetUserStatus,
+} from "../../data/actions/users";
 
 export const UserItem = ({ user }) => {
     const dispatch = useDispatch();
-    const { assignRole, removeRole } = useBackend();
     const changeRoleStatus = useSelector(selectChangeRoleStatus);
 
     useEffect(() => {
         if (changeRoleStatus.status === "error") {
             alert(changeRoleStatus.error);
-            dispatch(resetStatus("changeRoleStatus"))
+            dispatch(resetUserStatus("changeRoleStatus"));
         }
-    }, [changeRoleStatus, dispatch]);
+    }, [changeRoleStatus]);
 
     const unassignedRoles = ["ROLE_ADMIN", "ROLE_EDITOR", "ROLE_WRITER"].filter(
         (role) => !user.roles.includes(role),
     );
 
     const onAssignRole = (role) => {
-        assignRole({ userId: user.id, role });
+        dispatch(assignRole({ userId: user.id, role }));
     };
 
     const onRemoveRole = (role) => {
-        removeRole({ userId: user.id, role });
+        dispatch(removeRole({ userId: user.id, role }));
     };
 
     return (
-        <LoadingItem className="w-50 mb-4 border" isLoading={changeRoleStatus.status === 'loading' && changeRoleStatus.userId === user.id}>
+        <LoadingItem
+            className="w-50 mb-4 border"
+            isLoading={
+                changeRoleStatus.status === "loading" &&
+                changeRoleStatus.userId === user.id
+            }
+        >
             <div className="p-4">
                 <div className="d-flex justify-content-between mb-5">
                     <span>
@@ -50,7 +58,7 @@ export const UserItem = ({ user }) => {
                             key={role}
                             role={role}
                             onRoleClicked={onRemoveRole}
-                            disabled={changeRoleStatus.status === 'loading'}
+                            disabled={changeRoleStatus.status === "loading"}
                         />
                     ))}
                 </div>
@@ -65,7 +73,7 @@ export const UserItem = ({ user }) => {
                                 role={role}
                                 isAdd={true}
                                 onRoleClicked={onAssignRole}
-                                disabled={changeRoleStatus.status === 'loading'}
+                                disabled={changeRoleStatus.status === "loading"}
                             />
                         ))}
                     </div>

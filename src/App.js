@@ -6,54 +6,60 @@ import { SingleArticle } from "./features/articles/SingleArticle";
 import { UserArticles } from "./features/articles/UserArticles";
 import { UserList } from "./features/users/UserList";
 import { EditArticle } from "./features/articles/EditArticle";
-import { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { setToken } from "./features/users/usersSlice";
+import { useEffect, useState } from "react";
+import { Spinner } from "react-bootstrap";
+import { setToken } from "./data/actions/users";
+import { loadToken } from "./helpers/tokenStorage";
 
 function App() {
-    const dispatch = useDispatch();
 
-    useEffect(() => {
-        const token = localStorage.getItem('jwtToken');
-        if (token) {
-            dispatch(setToken(token));
-        }
-    }, [])
+    // const [tokenLoaded, setTokenLoaded] = useState(false);
+    const [tokenLoaded, setTokenLoaded] = useState(true);
 
-    return (
-        <div>
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/dashboard" element={<DashboardPage />}>
-                        <Route path="article" element={<AllArticles />} />
-                        <Route
-                            path="article/:articleId"
-                            element={<SingleArticle />}
-                        />
-                        <Route
-                            path="article/:articleId/edit"
-                            element={<EditArticle />}
-                        />
-                        <Route
-                            path="user-article"
-                            element={<UserArticles />}
-                        />
-                        <Route 
-                            path="user"
-                            element={<UserList />}
-                        />
-                        <Route
-                            path=""
-                            element={
-                                <Navigate replace to={"/dashboard/article"} />
-                            }
-                        />
-                    </Route>
-                    <Route path="/login" element={<LoginPage />} />
-                </Routes>
-            </BrowserRouter>
-        </div>
-    );
+    // useEffect(() => {
+    //     const getToken = async () => {
+    //         const token = loadToken();
+    //         if (token) {
+    //             setToken(token);
+    //         }
+    //     };
+
+    //     getToken().then(() => setTokenLoaded(true));
+    // }, []);
+
+    if (tokenLoaded){
+        return (
+            <div>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/dashboard" element={<DashboardPage />}>
+                            <Route path="article" element={<AllArticles />} />
+                            <Route
+                                path="article/:articleId"
+                                element={<SingleArticle />}
+                            />
+                            <Route
+                                path="article/:articleId/edit"
+                                element={<EditArticle />}
+                            />
+                            <Route path="user-article" element={<UserArticles />} />
+                            <Route path="user" element={<UserList />} />
+                            <Route
+                                path=""
+                                element={
+                                    <Navigate replace to={"/dashboard/article"} />
+                                }
+                            />
+                        </Route>
+                        <Route path="/login" element={<LoginPage />} />
+                    </Routes>
+                </BrowserRouter>
+            </div>
+        );
+    } else {
+        return <Spinner />
+    }
+    
 }
 
 export default App;

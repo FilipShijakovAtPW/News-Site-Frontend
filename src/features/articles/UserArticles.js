@@ -1,35 +1,30 @@
 import { useEffect } from "react";
-import { useBackend } from "../../hooks/backend";
-import { useDispatch, useSelector } from "react-redux";
-import {
-    resetStatus,
-    selectFetchUserArticlesStatus,
-    selectUserArticles,
-} from "./articlesSlice";
 import { ArticleList } from "./ArticleList";
+import { useDispatch, useSelector } from "react-redux";
+import { selectFetchUserArticlesStatus, selectUserArticles } from "../../data/selectors/selectors";
+import { fetchUserArticles, resetArticlesStatus } from "../../data/actions/articles";
 
 export const UserArticles = () => {
     const dispatch = useDispatch();
-    const { doFetchUserArticles } = useBackend();
     const articles = useSelector(selectUserArticles);
     const fetchStatus = useSelector(selectFetchUserArticlesStatus);
 
     useEffect(() => {
         if (!articles.hasFetched) {
-            doFetchUserArticles({});
+            dispatch(fetchUserArticles({}));
         }
-    }, [articles, doFetchUserArticles]);
+    }, [articles, dispatch]);
 
     useEffect(() => {
         if (fetchStatus.status === "error") {
             alert(fetchStatus.error);
-            dispatch(resetStatus("fetchUserArticlesStatus"));
+            dispatch(resetArticlesStatus("fetchUserArticlesStatus"));
         }
     }, [fetchStatus, dispatch]);
 
     const onNextPagination = () => {
         const { page } = articles;
-        doFetchUserArticles({ page: page + 1 });
+        dispatch(fetchUserArticles({ page: page + 1 }));
     };
 
     const onPrevPagination = () => {
@@ -37,11 +32,11 @@ export const UserArticles = () => {
         if (page === 1) {
             return;
         }
-        doFetchUserArticles({ page: page - 1 });
+        dispatch(fetchUserArticles({ page: page - 1 }));
     };
 
     const onSetFilters = (filters) => {
-        doFetchUserArticles({ page: 1, filters });
+        dispatch(fetchUserArticles({ page: 1, filters }));
     };
 
     return (
