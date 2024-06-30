@@ -24,8 +24,6 @@ export const editArticleReducer = (state, action) => {
 
             const { articleId, title, content, summary } = action.arg;
 
-            console.log(action);
-
             const articleItemInArticles = newState.articles.items.find(
                 (article) => article.id === articleId,
             );

@@ -1,6 +1,7 @@
-import { CALL_API } from "../../middleware/api";
+import { CALL_API, NO_NORMALIZATION } from "../../middleware/api";
 import { calculateQueryString } from "../../helpers/calculateQueryString";
 import { SET_TOKEN, SET_TOKEN_IF_PRESENT } from "../../helpers/tokenStorage";
+import { ArticleSchema } from "../schemas/articles";
 
 export const RESET_ARTICLES_STATUS = "RESET_ARTICLES_STATUS";
 
@@ -24,7 +25,7 @@ export const EDIT_ARTICLE_REQUEST = "EDIT_ARTICLE_REQUEST";
 export const EDIT_ARTICLE_SUCCESS = "EDIT_ARTICLE_SUCCESS";
 export const EDIT_ARTICLE_FAILURE = "EDIT_ARTICLE_FAILURE";
 
-const _fetchArticles = (options) => {
+const _fetchArticles = (contextName, options) => {
     const requestQueryString = calculateQueryString(options);
 
     return {
@@ -37,19 +38,25 @@ const _fetchArticles = (options) => {
             options: {
                 method: "get",
                 headers: {
-                    Authorization: SET_TOKEN_IF_PRESENT
+                    Authorization: SET_TOKEN_IF_PRESENT,
                 },
             },
-            schema: null,
+            schema: ArticleSchema.ARTICLE_ARRAY,
             endpoint: "/dashboard/article?" + requestQueryString,
         },
         arg: {
-            ...options
+            contextName,
+            ...options,
+        },
+        context: {
+            name: contextName,
+            page: options.page,
+            filters: options.filters,
         },
     };
 };
 
-const _fetchUserArticles = (options) => {
+const _fetchUserArticles = (contextName, options) => {
     const requestQueryString = calculateQueryString(options);
 
     return {
@@ -62,21 +69,25 @@ const _fetchUserArticles = (options) => {
             options: {
                 method: "get",
                 headers: {
-                    Authorization: SET_TOKEN
+                    Authorization: SET_TOKEN,
                 },
             },
-            schema: null,
+            schema: ArticleSchema.ARTICLE_ARRAY,
             endpoint: "/dashboard/user-article?" + requestQueryString,
         },
         arg: {
-            ...options
+            contextName,
+            ...options,
+        },
+        context: {
+            name: contextName,
+            page: options.page,
+            filters: options.filters,
         },
     };
 };
 
-const _publishArticle = (options) => {
-    const { articleId } = options;
-
+const _publishArticle = (articleId) => {
     return {
         [CALL_API]: {
             types: [
@@ -87,21 +98,19 @@ const _publishArticle = (options) => {
             options: {
                 method: "get",
                 headers: {
-                    Authorization: SET_TOKEN
+                    Authorization: SET_TOKEN,
                 },
             },
-            schema: null,
+            schema: NO_NORMALIZATION,
             endpoint: `/dashboard/article/${articleId}/change-published-state`,
         },
         arg: {
-            ...options
+            articleId,
         },
     };
 };
 
-const _createArticle = (options) => {
-    const { title, content, summary } = options;
- 
+const _createArticle = (title, content, summary) => {
     return {
         [CALL_API]: {
             types: [
@@ -112,15 +121,15 @@ const _createArticle = (options) => {
             options: {
                 method: "post",
                 headers: {
-                    Authorization: SET_TOKEN
+                    Authorization: SET_TOKEN,
                 },
                 body: {
                     title,
                     content,
-                    summary
-                }
+                    summary,
+                },
             },
-            schema: null,
+            schema: NO_NORMALIZATION,
             endpoint: "/dashboard/article",
         },
         arg: {
@@ -131,9 +140,7 @@ const _createArticle = (options) => {
     };
 };
 
-const _editArticle = (options) => {
-    const { articleId, title, content, summary } = options;
-
+const _editArticle = (articleId, title, content, summary) => {
     return {
         [CALL_API]: {
             types: [
@@ -144,15 +151,15 @@ const _editArticle = (options) => {
             options: {
                 method: "put",
                 headers: {
-                    Authorization: SET_TOKEN
+                    Authorization: SET_TOKEN,
                 },
                 body: {
                     title,
                     content,
-                    summary
-                }
+                    summary,
+                },
             },
-            schema: null,
+            schema: ArticleSchema.ARTICLE,
             endpoint: `/dashboard/article/${articleId}`,
         },
         arg: {
@@ -164,20 +171,31 @@ const _editArticle = (options) => {
     };
 };
 
-export const fetchArticles = ({page = 1, filters = {}}) => (dispatch, getState) =>
-    dispatch(_fetchArticles({page, filters}));
+export const fetchArticles =
+    ({ page = 1, filters = {} }) =>
+    (dispatch, getState) =>
+        dispatch(_fetchArticles("fetch-articles", { page, filters }));
 
-export const fetchUserArticles = (options) => (dispatch, getState) =>
-    dispatch(_fetchUserArticles(options));
+export const fetchUserArticles =
+    ({ page = 1, filters = {} }) =>
+    (dispatch, getState) =>
+        dispatch(_fetchUserArticles("fetch-user-articles", { page, filters }));
 
 export const publishArticle = (options) => (dispatch, getState) =>
-    dispatch(_publishArticle(options));
+    dispatch(_publishArticle(options.articleId));
 
 export const createArticle = (options) => (dispatch, getState) =>
-    dispatch(_createArticle(options));
+    dispatch(_createArticle(options.title, options.content, options.summary));
 
 export const editArticle = (options) => (dispatch, getState) =>
-    dispatch(_editArticle(options));
+    dispatch(
+        _editArticle(
+            options.articleId,
+            options.title,
+            options.content,
+            options.summary,
+        ),
+    );
 
-export const resetArticlesStatus = (area) => (dispatch, getState) =>
-    dispatch({type: RESET_ARTICLES_STATUS, payload: area});
+export const resetArticlesStatus = (area) =>
+    ({ type: RESET_ARTICLES_STATUS, payload: area });

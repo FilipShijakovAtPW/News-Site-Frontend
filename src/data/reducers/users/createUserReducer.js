@@ -15,7 +15,6 @@ export const createUserReducer = (state, action) => {
                 },
             };
         case CREATE_USER_SUCCESS:
-            console.log(action);
             alert(action.payload["confirmation-url"]);
             return {
                 ...state,

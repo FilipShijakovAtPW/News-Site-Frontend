@@ -1,6 +1,7 @@
-import { CALL_API } from "../../middleware/api";
+import { CALL_API, NO_NORMALIZATION } from "../../middleware/api";
 import { calculateHeaders } from "../../helpers/calculateHeaders";
 import * as tokenStorage from "../../helpers/tokenStorage";
+import { UserSchema } from "../schemas/users";
 
 export const RESET_USER_STATUS = "RESET_USER_STATUS";
 export const SET_TOKEN = "SET_TOKEN";
@@ -22,9 +23,7 @@ export const CREATE_USER_REQUEST = "CREATE_USER_REQUEST";
 export const CREATE_USER_SUCCESS = "CREATE_USER_SUCCESS";
 export const CREATE_USER_FAILURE = "CREATE_USER_FAILURE";
 
-const _login = (options) => {
-    const { username, password } = options;
-
+const _login = (username, password) => {
     return {
         [CALL_API]: {
             types: [LOGIN_REQUEST, LOGIN_SUCCESS, LOGIN_FAILURE],
@@ -36,7 +35,7 @@ const _login = (options) => {
                     password,
                 },
             },
-            schema: null,
+            schema: NO_NORMALIZATION,
             endpoint: "/login_check",
         },
         arg: {
@@ -46,7 +45,7 @@ const _login = (options) => {
     };
 };
 
-const _fetchUsers = (options) => {
+const _fetchUsers = (contextName) => {
     return {
         [CALL_API]: {
             types: [
@@ -60,15 +59,19 @@ const _fetchUsers = (options) => {
                     Authorization: tokenStorage.SET_TOKEN,
                 },
             },
-            schema: null,
+            schema: UserSchema.USER_ARRAY,
             endpoint: "/dashboard/user",
+        },
+        arg: {
+            contextName,
+        },
+        context: {
+            name: contextName,
         },
     };
 };
 
-const _changeUserRole = (options) => {
-    const { role, userId, shouldAssign } = options;
-
+const _changeUserRole = (userId, role, shouldAssign) => {
     return {
         [CALL_API]: {
             types: [
@@ -86,22 +89,20 @@ const _changeUserRole = (options) => {
                     role,
                 },
             },
-            schema: null,
+            schema: NO_NORMALIZATION,
             endpoint:
                 "/dashboard/user/" +
                 (shouldAssign ? "assign-role" : "remove-role"),
         },
         arg: {
-            role,
             userId,
+            role,
             shouldAssign,
         },
     };
 };
 
-const _createUser = (options) => {
-    const { username, email } = options;
-
+const _createUser = (username, email) => {
     return {
         [CALL_API]: {
             types: [
@@ -119,7 +120,7 @@ const _createUser = (options) => {
                     email,
                 },
             },
-            schema: null,
+            schema: NO_NORMALIZATION,
             endpoint: "/dashboard/user/",
         },
         arg: {
@@ -130,24 +131,26 @@ const _createUser = (options) => {
 };
 
 export const login = (options) => (dispatch, getState) =>
-    dispatch(_login(options));
+    dispatch(_login(options.username, options.password));
 
 export const fetchUsers = (options) => (dispatch, getState) =>
-    dispatch(_fetchUsers(options));
+    dispatch(_fetchUsers("fetch-users"));
 
 export const assignRole = (options) => (dispatch, getState) =>
-    dispatch(_changeUserRole({ ...options, shouldAssign: true }));
+    dispatch(_changeUserRole(options.userId, options.role, true));
 
 export const removeRole = (options) => (dispatch, getState) =>
-    dispatch(_changeUserRole({ ...options, shouldAssign: false }));
+    dispatch(_changeUserRole(options.userId, options.role, false));
 
 export const createUser = (options) => (dispatch, getState) =>
-    dispatch(_createUser(options));
+    dispatch(_createUser(options.username, options.email));
 
-export const resetUserStatus = (area) => (dispatch, getState) =>
-    dispatch({ type: RESET_USER_STATUS, payload: area });
+export const resetUserStatus = (area) => 
+    ({ type: RESET_USER_STATUS, payload: area });
 
-export const setToken = (username, roles, token) => (dispatch, getState) =>
-    dispatch({ type: RESET_USER_STATUS, payload: { username, roles, token } });
+export const setToken = (username, roles, token) => ({
+    type: RESET_USER_STATUS,
+    payload: { username, roles, token },
+});
 
-export const logout = () => (dispatch, getState) => dispatch({ type: LOGOUT });
+export const logout = () => ({ type: LOGOUT });

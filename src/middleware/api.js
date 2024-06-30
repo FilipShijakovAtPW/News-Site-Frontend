@@ -1,7 +1,9 @@
+import { normalize } from "normalizr";
 import { getFullUrl } from "../helpers/getFullUrl";
 import * as token from "../helpers/tokenStorage";
 
 export const CALL_API = "CALL_API";
+export const NO_NORMALIZATION = "NO_NORMALIZATION";
 
 export const api = (store) => (next) => (action) => {
     const callApi = action[CALL_API];
@@ -13,6 +15,10 @@ export const api = (store) => (next) => (action) => {
     const { endpoint, options, types, schema } = callApi;
 
     options.headers["Content-Type"] = "application/json";
+
+    if (options.body) {
+        options.body = JSON.stringify(options.body);
+    }
 
     if (options.headers["Authorization"] === token.SET_TOKEN) {
         if (!token.isTokenPresent()) {
@@ -33,9 +39,9 @@ export const api = (store) => (next) => (action) => {
         throw new Error("Specify a string endpoint URL.");
     }
 
-    // if (!schema) {
-    //     throw new Error("Specify one of the exported Schemas.");
-    // }
+    if (!schema) {
+        throw new Error("Specify one of the exported Schemas.");
+    }
 
     if (!Array.isArray(types) || types.length !== 3) {
         throw new Error("Expected an array of three action types.");
@@ -50,7 +56,7 @@ export const api = (store) => (next) => (action) => {
 
     next(actionWith(action, { __timestamp, type: requestType }));
 
-    return doHttpCall(endpoint, options).then(
+    return doHttpCall(endpoint, options, schema).then(
         createSuccessHandler(
             { ...action, __timestamp, type: successType },
             next,
@@ -63,7 +69,7 @@ export const api = (store) => (next) => (action) => {
 };
 
 const createSuccessHandler = (action, next) => (response) =>
-    next(actionWith(action, { payload: response }));
+    next(actionWith(action, { response }));
 
 const createFailureHandler = (action, next) => (response) =>
     next(
@@ -72,6 +78,7 @@ const createFailureHandler = (action, next) => (response) =>
                 response.error && response.error.message
                     ? response.error.message
                     : response.message || "Something bad happened",
+            errorBag: response || [],
         }),
     );
 
@@ -81,37 +88,43 @@ const actionWith = (action, data) => {
     return finalAction;
 };
 
-const doHttpCall = (endpoint, options) => {
+const doHttpCall = (endpoint, options, schema) => {
     const fullUrl = getFullUrl(endpoint);
 
-    return fetch(fullUrl, {
-        ...options,
-        body: options.body ? JSON.stringify(options.body) : undefined,
-    })
+    const handleJson = (json) => {
+        if (schema === NO_NORMALIZATION) {
+            return json;
+        }
+
+        return normalize(
+            digData(json),
+            schema
+        );
+    };
+
+    return fetch(fullUrl, options)
         .then((response) => {
             if (!response.ok) {
-                console.log(response);
-                throw new Error();
+                throw new Error("Error while fetching");
             }
-            return response
-                .json()
-                .then((json) => {
-                    if (!response.ok) {
-                        return Promise.reject(json);
-                    }
+            if (response.headers.get("content-type") === "application/json") {
+                return response
+                    .json()
+                    .then((json) => {
+                        if (!response.ok) {
+                            return Promise.reject(json);
+                        }
 
-                    return digData(json);
-                })
-                .catch((err) => {
-                    console.log("Error getting json result");
-                    return {
-                        status: "OK",
-                    };
-                });
+                        return handleJson(json);
+                    })
+                    .catch((err) => {
+                        return Promise.reject(err);
+                    });
+            }
+            return {};
         })
         .catch((err) => {
-            console.log("ERRORRRRRR")
-            throw new Error("Request failed")
+            throw new Error("Request failed");
         });
 };
 
